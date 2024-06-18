@@ -43,6 +43,9 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
+        #衝突判定
+        if kk_rct.colliderect(bb_rct):
+            return 
         # こうかとんの挙動
         screen.blit(bg_img, [0, 0]) 
         key_lst = pg.key.get_pressed()
