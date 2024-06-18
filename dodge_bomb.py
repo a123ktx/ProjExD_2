@@ -180,6 +180,7 @@ def main():
         tmr += 1
         clock.tick(50)
 
+
 if __name__ == "__main__":
     pg.init()
     main()
