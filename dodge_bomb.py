@@ -63,21 +63,48 @@ def main():
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
     bb_img.set_colorkey((0, 0, 0))
     bb_rct = bb_img.get_rect()
-    bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
+    bb_rct.center = random.randint(10, WIDTH-10), random.randint(10, HEIGHT-10)
     vx, vy = +5, +5
     # 爆弾の変更リストを受け取る
     bb_accs, bb_imgs = bb_change()
     clock = pg.time.Clock()
     tmr = 0
+    end_tmr = 0
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
         #衝突判定
         if kk_rct.colliderect(bb_rct):
-            return 
-        # こうかとんの挙動
+            #ゲームオーバーを表示させる
+            gg_img = pg.Surface((WIDTH, HEIGHT))
+            pg.draw.rect(gg_img, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+            gg_img.set_alpha(200)
+            screen.blit(gg_img, (0, 0))
+            # ここまでで、画面が暗くなる
+            # ここから文字を入力する
+            font = pg.font.Font(None, 120)
+            txt = font.render("Game Over",
+                              True, (255, 255, 255))
+            txt_rct = txt.get_rect()
+            txt_x = WIDTH/2 - txt_rct.width/2
+            txt_y = HEIGHT/2 - txt_rct.height/2
+            screen.blit(txt, [txt_x, txt_y])
+            # 文字の横にこうかとんを配置する
+            gk_img = pg.transform.rotozoom(pg.image.load("fig/8.png"), 0, 2.0)
+            gk_rct = gk_img.get_rect()
+            screen.blit(gk_img, (txt_x - gk_rct.width - 20,
+                                 txt_y - gk_rct.height/4))
+            screen.blit(gk_img, (txt_x + txt_rct.width + 20,
+                                 txt_y - gk_rct.height/4))
+            pg.display.update()
+            # 5秒間計測する
+            while end_tmr < 5:
+                end_tmr += 1
+                clock.tick(1)
+            return
         screen.blit(bg_img, [0, 0]) 
+        # こうかとんの挙動
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         for k, v in DELTA.items():
@@ -106,7 +133,6 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
 
 if __name__ == "__main__":
     pg.init()
