@@ -12,6 +12,18 @@ DELTA = {pg.K_UP   :(0, -5),
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
+def check_bound(rct:pg.Rect):
+    """
+    こうかとんと爆弾が画面外に出ているか確認する関数
+    """
+    yoko, tate = True, True
+    if rct.left < 0 or WIDTH < rct.right:
+        yoko = False
+    if rct.top < 0 or HEIGHT < rct.bottom:
+        tate = False
+    return yoko, tate
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -31,6 +43,7 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
+        # こうかとんの挙動
         screen.blit(bg_img, [0, 0]) 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
@@ -39,7 +52,14 @@ def main():
                 sum_mv[0] += v[0]
                 sum_mv[1] += v[1]
         kk_rct.move_ip(sum_mv)
+        if check_bound(kk_rct) != (True, True):
+            kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
+        #爆弾の挙動
+        if check_bound(bb_rct)[0] == False:
+            vx *= -1
+        elif check_bound(bb_rct)[1] == False:
+            vy *= -1
         bb_rct.move_ip(vx, vy)
         screen.blit(bb_img, bb_rct)
         pg.display.update()
