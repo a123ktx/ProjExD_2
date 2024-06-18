@@ -2,6 +2,7 @@ import os
 import sys
 import pygame as pg
 import random
+import math
 
 
 WIDTH, HEIGHT = 1600, 900
@@ -11,7 +12,30 @@ DELTA = {pg.K_UP   :(0, -5),
          pg.K_LEFT :(-5, 0),
          pg.K_RIGHT:(+5, 0)}
 # 移動方向に応じて画像の角度を返す辞書ANGLE
-ANGEL = {( 0,  0):0,
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
+def check_bound(rct:pg.Rect):
+    """
+    こうかとんと爆弾が画面外に出ているか確認する関数
+    引数:こうかとんと爆弾のrct
+    戻り値:はみ出していなければTrue、出てればFalseを返す
+    """
+    yoko, tate = True, True
+    if rct.left < 0 or WIDTH < rct.right:
+        yoko = False
+    if rct.top < 0 or HEIGHT < rct.bottom:
+        tate = False
+    return yoko, tate
+
+
+def kk_angle():
+    """
+    こうかとんの角度を辞書で返す関数
+    戻り値:移動をキーとした角度の辞書
+    """
+    ANGEL = {( 0,  0):0,
          (-5, +5):45,
          ( 0, +5):90,
          (+5, +5):135,
@@ -20,19 +44,7 @@ ANGEL = {( 0,  0):0,
          ( 0, -5):270,
          (-5, -5):315,
          (-5,  0):360}
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-
-def check_bound(rct:pg.Rect):
-    """
-    こうかとんと爆弾が画面外に出ているか確認する関数
-    """
-    yoko, tate = True, True
-    if rct.left < 0 or WIDTH < rct.right:
-        yoko = False
-    if rct.top < 0 or HEIGHT < rct.bottom:
-        tate = False
-    return yoko, tate
+    return ANGEL
 
 
 def bb_change():
@@ -52,6 +64,25 @@ def bb_change():
     return accs, bb_imgs
 
 
+def bb_chase(x, y):
+    """
+    爆弾がこうかとんを追従する関数
+    引数:xは爆弾とこうかとんの横座標の差、yは縦座標の差
+    戻り値は速さベクトルのタプル
+    """
+    ax = 1
+    ay = 1
+    if x < 0:
+        ax = -1
+    if y <0:
+        ay = -1
+    nolm_x = min(x**2, 25)
+    nolm_y = min(y**2, 25)
+    nolm_x = math.sqrt(nolm_x) * ax
+    nolm_y = math.sqrt(nolm_y) * ay
+    return nolm_x, nolm_y
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -65,6 +96,8 @@ def main():
     bb_rct = bb_img.get_rect()
     bb_rct.center = random.randint(10, WIDTH-10), random.randint(10, HEIGHT-10)
     vx, vy = +5, +5
+    # 角度の辞書を受け取る
+    angle = kk_angle()
     # 爆弾の変更リストを受け取る
     bb_accs, bb_imgs = bb_change()
     clock = pg.time.Clock()
@@ -114,7 +147,7 @@ def main():
         kk_rct.move_ip(sum_mv)
         mv_tup = tuple(sum_mv)
         # 移動方向によってこうかとんの向きが変わるように
-        kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), ANGEL[mv_tup], 2.0)
+        kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), angle[mv_tup], 2.0)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
@@ -125,10 +158,18 @@ def main():
             vy *= -1
         # 爆弾の画像を選択する
         bb_img = bb_imgs[min(tmr//500, 9)]
-        # 爆弾の速度を選択する
-        avx = vx*bb_accs[min(tmr//500, 9)]
-        avy = vy*bb_accs[min(tmr//500, 9)]
-        bb_rct.move_ip(avx, avy)
+        # 範囲300以内の時、爆弾を追従させる
+        nolm_x = kk_rct.centerx - bb_rct.centerx
+        nolm_y = kk_rct.centery - bb_rct.centery
+        rang = math.sqrt(nolm_x**2 + nolm_y**2)
+        if rang < 300:
+            cvx, cvy = bb_chase(nolm_x, nolm_y)
+            bb_rct.move_ip(cvx, cvy)
+        else:
+            # 爆弾の速度を選択する
+            avx = vx*bb_accs[min(tmr//500, 9)]
+            avy = vy*bb_accs[min(tmr//500, 9)]
+            bb_rct.move_ip(avx, avy)
         screen.blit(bb_img, bb_rct)
         pg.display.update()
         tmr += 1
