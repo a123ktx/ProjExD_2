@@ -70,16 +70,20 @@ def bb_chase(x, y):
     引数:xは爆弾とこうかとんの横座標の差、yは縦座標の差
     戻り値は速さベクトルのタプル
     """
+    # x, yの記号を保存する
     ax = 1
     ay = 1
     if x < 0:
         ax = -1
     if y <0:
         ay = -1
+    # ノルム値が√50を超えないようにする
     nolm_x = min(x**2, 25)
     nolm_y = min(y**2, 25)
+    # ベクトルに記号を戻す
     nolm_x = math.sqrt(nolm_x) * ax
     nolm_y = math.sqrt(nolm_y) * ay
+    # ベクトルをタプルで返す
     return nolm_x, nolm_y
 
 
@@ -161,6 +165,7 @@ def main():
         # 範囲300以内の時、爆弾を追従させる
         nolm_x = kk_rct.centerx - bb_rct.centerx
         nolm_y = kk_rct.centery - bb_rct.centery
+        # 座標の差から距離を出す
         rang = math.sqrt(nolm_x**2 + nolm_y**2)
         if rang < 300:
             cvx, cvy = bb_chase(nolm_x, nolm_y)
